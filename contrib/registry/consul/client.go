@@ -27,15 +27,18 @@ type Client struct {
 	healthcheckInterval int
 	// heartbeat enable heartbeat
 	heartbeat bool
+	// deregister critical services time in seconds
+	deregisterCriticalTime int
 }
 
 // NewClient creates consul client
 func NewClient(cli *api.Client) *Client {
 	c := &Client{
-		cli:                 cli,
-		resolver:            defaultResolver,
-		healthcheckInterval: 10,
-		heartbeat:           true,
+		cli:                    cli,
+		resolver:               defaultResolver,
+		healthcheckInterval:    10,
+		deregisterCriticalTime: 2 * 3600,
+		heartbeat:              true,
 	}
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	return c
@@ -123,7 +126,7 @@ func (c *Client) Register(_ context.Context, svc *registry.ServiceInstance, enab
 			asr.Checks = append(asr.Checks, &api.AgentServiceCheck{
 				TCP:                            address,
 				Interval:                       fmt.Sprintf("%ds", c.healthcheckInterval),
-				DeregisterCriticalServiceAfter: fmt.Sprintf("%ds", c.healthcheckInterval*60),
+				DeregisterCriticalServiceAfter: fmt.Sprintf("%ds", c.deregisterCriticalTime),
 				Timeout:                        "5s",
 			})
 		}
@@ -132,7 +135,7 @@ func (c *Client) Register(_ context.Context, svc *registry.ServiceInstance, enab
 		asr.Checks = append(asr.Checks, &api.AgentServiceCheck{
 			CheckID:                        "service:" + svc.ID,
 			TTL:                            fmt.Sprintf("%ds", c.healthcheckInterval*2),
-			DeregisterCriticalServiceAfter: fmt.Sprintf("%ds", c.healthcheckInterval*60),
+			DeregisterCriticalServiceAfter: fmt.Sprintf("%ds", c.deregisterCriticalTime),
 		})
 	}
 

@@ -54,6 +54,15 @@ func WithHealthCheckInterval(interval int) Option {
 	}
 }
 
+// WithDeregisterCriticalTime deregister critical services after t seconds
+func WithDeregisterCriticalTime(t int) Option {
+	return func(o *Registry) {
+		if o.cli != nil {
+			o.cli.deregisterCriticalTime = t
+		}
+	}
+}
+
 // Config is consul registry config
 type Config struct {
 	*api.Config
